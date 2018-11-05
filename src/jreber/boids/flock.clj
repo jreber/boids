@@ -10,4 +10,6 @@
   distance of position.")
 
   (density-gradient [flock position] "Returns the density graident (in some
-  format) of the flock at position."))
+  format) of the flock at position.")
+
+  (boids [flock] "Returns a seq of all the boids in this flock."))
