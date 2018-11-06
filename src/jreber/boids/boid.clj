@@ -15,19 +15,16 @@
   keep this boid aligned with its flock. A flock is a set/seq of boids."))
 
 (defn update
-  "Returns a new boid object that is is moved one time step according to
-  the values of (position ...), (velocity ...), and (adjust ...).
+  "Returns a new boid position and velocity that is moved one time step
+  according to the values of (position ...), (velocity ...),
+  and (adjust ...).
 
   The difference between this function and boid#adjust is that adjust
   returns the acceleration that the boid would do, while this function
-  actually makes that change.
-
-  create-boid must be a function that takes two parameters (position
-  and velocity) and returns a boid."
-  [create-boid boid flock]
+  actually makes that change."
+  [boid flock]
   (let [pos   (position boid)
         vel   (velocity boid)
         accel (adjust boid flock)]
-    (create-boid
-     (+ pos vel)
-     (+ vel accel))))
+    [(+ pos vel)
+     (+ vel accel)]))
