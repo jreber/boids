@@ -1,30 +1,44 @@
 (ns jreber.boids.boid
-  (:refer-clojure :exclude [update]))
+  (:refer-clojure :exclude [+])
+  (:require [clojure.spec.alpha :as s]
+            [jreber.boids.math.vector :as v]
+            [clojure.algo.generic.arithmetic :as generic :refer [+]]))
 
-(defprotocol boid
-  "Basic data algebra for a boid; or, 'the set of all things you can do
-  with a boid.'"
 
-  (position [boid] "Returns the position of this boid in some undetermined
-  coordinate system.")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; boid definitions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(s/def ::position ::v/vector)
+(s/def ::velocity ::v/vector)
+(s/def ::boid (s/keys ::position
+                      ::velocity))
 
-  (velocity [boid] "Returns the velocity of this boid in some undetermined
-  format.")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; basic boid operations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod + [clojure.lang.IPersistentMap v/Vector] ;; add acceleration to a boid
+  [m acceleration]
+  (let [{:keys [::velocity] :as boid} (s/conform ::boid m)]
+    (if (= boid ::s/invalid)
+      (throw (ex-info "Invalid boid provided"
+                      (s/explain-data ::boid m)))
+      (update boid ::velocity + acceleration))))
 
-  (adjust [boid flock] "Returns an acceleration (in some undetermined format) to
-  keep this boid aligned with its flock. A flock is a set/seq of boids."))
+(defn move
+  "Moves a boid forward in time one time step, corresponding to adding
+  the velocity vector to the position vector."
+  [m]
+  (let [{:keys [::position ::velocity] :as boid} (s/conform ::boid m)]
+    (if (= boid ::s/invalid)
+      (throw (ex-info "Invalid boid provided"
+                      (s/explain-data ::boid m)))
+      (update boid ::position + velocity))))
 
-(defn update
-  "Returns a new boid position and velocity that is moved one time step
-  according to the values of (position ...), (velocity ...),
-  and (adjust ...).
-
-  The difference between this function and boid#adjust is that adjust
-  returns the acceleration that the boid would do, while this function
-  actually makes that change."
-  [boid flock]
-  (let [pos   (position boid)
-        vel   (velocity boid)
-        accel (adjust boid flock)]
-    [(+ pos vel)
-     (+ vel accel)]))
+(s/fdef move
+  :args (s/cat :boid ::boid)
+  :ret ::boid
+  :fn (s/and #(= (-> % :ret ::position)
+                 (+ (-> % :args :boid ::position)
+                    (-> % :args :boid ::velocity)))
+             #(= (-> % :ret ::velocity)
+                 (-> % :args :boid ::velocity))))

@@ -1,7 +1,12 @@
 (ns jreber.boids.math.vector
   (:refer-clojure :exclude [+])
-  (:require [clojure.algo.generic.arithmetic :as generic]))
+  (:require [clojure.algo.generic.arithmetic :as generic]
+            [clojure.spec.alpha :as s]))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; vector definitions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol Vector
   "A representation of a simple vector. Up/down vector? Who cares!"
   (magnitude [vector] "Returns the magnitude of the vector")
@@ -18,6 +23,11 @@
   (add [vector other] "Returns a new vector that is the sum of vector and
   other."))
 
+(s/def ::vector #(satisfies? Vector %))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; basic vector operations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmethod generic/+ [Vector Vector]
   [v1 v2]
   (add v1 v2))
