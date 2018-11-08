@@ -12,6 +12,7 @@
 (s/def ::velocity ::v/vector)
 (s/def ::boid (s/keys ::position
                       ::velocity))
+(s/def ::boids (s/coll-of ::boid))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; basic boid operations

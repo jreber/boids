@@ -1,6 +1,6 @@
 (ns jreber.boids.math.vector
-  (:refer-clojure :exclude [+])
-  (:require [clojure.algo.generic.arithmetic :as generic]
+  (:refer-clojure :exclude [+ - /])
+  (:require [clojure.algo.generic.arithmetic :as generic :refer [+ - /]]
             [clojure.spec.alpha :as s]))
 
 
@@ -21,13 +21,30 @@
   something useful.")
 
   (add [vector other] "Returns a new vector that is the sum of vector and
-  other."))
+  other.")
+
+  (scale [vector scaler] "Returns a new vector that is a scaled version of
+  vector."))
 
 (s/def ::vector #(satisfies? Vector %))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; basic vector operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmethod generic/+ [Vector Vector]
+(defmethod + [Vector Vector]
   [v1 v2]
   (add v1 v2))
+
+(defmethod - [Vector Vector]
+  [v1 v2]
+  (add v1 (scale v2 -1)))
+
+(defmethod / [Vector java.lang.Number]
+  [v s]
+  (scale v (/ s)))
+
+(defn avg
+  "Returns a vector that is the average of the input vectors."
+  [vs]
+  (/ (reduce + vs)
+     (count vs)))

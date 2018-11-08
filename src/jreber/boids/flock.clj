@@ -1,15 +1,57 @@
-(ns jreber.boids.flock)
+(ns jreber.boids.flock
+  (:refer-clojure :exclude [-])
+  (:require [clojure.spec.alpha :as s]
+            [jreber.boids.boid :as boid]
+            [jreber.boids.math.vector :as v]
+            [clojure.algo.generic.arithmetic :as generic :refer [-]]))
 
-(defprotocol flock
-  "Represents the set of things you cna do with a flock."
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; specs for functions dealing groups of boids (flocks)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def boids-center-fspec
+  (s/fspec :args (s/cat :boids ::boid/boids)
+           :ret ::v/vector))
 
-  (center-of-mass [this] "Returns the position of the center of mass of the
-  flock.")
+(def boids-avg-velocity-fspec
+ (s/fspec :args (s/cat :boids ::boid/boids)
+          :ret ::v/vector))
 
-  (nearyby-boids [flock radius position] "Returns the set of boids within radius
-  distance of position.")
+(def boids-neighbors-fspec
+  (s/fspec :args (s/cat :boids    ::boid/boids
+                        :radius   number?
+                        :pos      ::v/vector)))
 
-  (density-gradient [flock position] "Returns the density graident (in some
-  format) of the flock at position.")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; implementations of the above specs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn center
+  "Returns a vector representing the center of the group of boids."
+  [boids]
+  (s/assert ::boid/boids boids)
+  (v/avg
+   (map ::boid/position boids)))
 
-  (boids [flock] "Returns a seq of all the boids in this flock."))
+(s/def center boids-center-fspec)
+
+
+(defn avg-velocity
+  "Returns a vector representing the average velocity of the group of boids."
+  [boids]
+  (s/assert ::boid/boids boids)
+  (v/avg
+   (map ::boid/velocity boids)))
+
+(s/def avg-velocity boids-avg-velocity-fspec)
+
+
+(defn neighbors
+  "Returns the set of boids within radius distance (exclusive) of position."
+  [boids radius pos]
+  (s/assert ::boid/boids boids)
+  (letfn [(within-radius? [{:keys [::boid/position]}]
+            (< (v/magnitude
+                (- position pos))
+               radius))]
+    (filter within-radius? boids)))
+
+(s/def neighbors boids-neighbors-fspec)
