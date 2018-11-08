@@ -14,32 +14,44 @@
                       ::velocity))
 (s/def ::boids (s/coll-of ::boid))
 
+(def boid-accelerate-fspec
+  (s/fspec
+   :args (s/cat :boid         ::boid
+                :acceleration ::v/vector)
+   :ret ::boid
+   :fn (s/and #(= (-> % :ret ::velocity)
+                  (+ (-> % :args :boid ::velocity)
+                     (-> % :args :acceleration)))
+              #(= (-> % :ret ::velocity)
+                  (-> % :args :boid ::velocity)))))
+
+(def boid-move-fspec
+  (s/fspec
+   :args (s/cat :boid ::boid)
+   :ret ::boid
+   :fn (s/and #(= (-> % :ret ::position)
+                  (+ (-> % :args :boid ::position)
+                     (-> % :args :boid ::velocity)))
+              #(= (-> % :ret ::velocity)
+                  (-> % :args :boid ::velocity)))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; basic boid operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmethod + [clojure.lang.IPersistentMap v/Vector] ;; add acceleration to a boid
-  [m acceleration]
-  (let [{:keys [::velocity] :as boid} (s/conform ::boid m)]
-    (if (= boid ::s/invalid)
-      (throw (ex-info "Invalid boid provided"
-                      (s/explain-data ::boid m)))
-      (update boid ::velocity + acceleration))))
+(defn accelerate
+  [{:keys [::velocity] :as boid} acceleration]
+  (s/assert ::boid boid)
+  (update boid ::velocity + acceleration))
+
+(s/def accelerate boid-accelerate-fspec)
+
 
 (defn move
   "Moves a boid forward in time one time step, corresponding to adding
   the velocity vector to the position vector."
-  [m]
-  (let [{:keys [::position ::velocity] :as boid} (s/conform ::boid m)]
-    (if (= boid ::s/invalid)
-      (throw (ex-info "Invalid boid provided"
-                      (s/explain-data ::boid m)))
-      (update boid ::position + velocity))))
+  [{:keys [::position] :as boid}]
+  (s/assert ::boid boid)
+  (update boid ::position + velocity))
 
-(s/fdef move
-  :args (s/cat :boid ::boid)
-  :ret ::boid
-  :fn (s/and #(= (-> % :ret ::position)
-                 (+ (-> % :args :boid ::position)
-                    (-> % :args :boid ::velocity)))
-             #(= (-> % :ret ::velocity)
-                 (-> % :args :boid ::velocity))))
+(s/def move boid-move-fspec)

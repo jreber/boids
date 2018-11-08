@@ -37,7 +37,8 @@
 
 (defmethod - [Vector Vector]
   [v1 v2]
-  (add v1 (scale v2 -1)))
+  (let [negate #(scale % -1)]
+    (add v1 (negate v2))))
 
 (defmethod / [Vector java.lang.Number]
   [v s]
