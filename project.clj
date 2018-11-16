@@ -7,4 +7,5 @@
                  [org.clojure/algo.generic "0.1.3"]]
   :main ^:skip-aot boids.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :dev {:dependencies [[org.clojure/test.check "0.9.0"]]}})
