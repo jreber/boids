@@ -4,6 +4,7 @@
              [arithmetic :as generic :refer [+ - /]]
              [math-functions :as m]]
             [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
             [clojure.spec.gen.alpha :as gen]))
 
 
@@ -26,28 +27,6 @@
                             #(not (Double/isNaN %))
                             #(not (Double/isInfinite %))))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; basic vector operations
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmethod + [clojure.lang.PersistentVector clojure.lang.PersistentVector]
-  [v1 v2]
-  (add v1 v2))
-
-(defmethod - [clojure.lang.PersistentVector clojure.lang.PersistentVector]
-  [v1 v2]
-  (let [negate #(scale % -1)]
-    (add v1 (negate v2))))
-
-(defmethod / [clojure.lang.PersistentVector java.lang.Number]
-  [v s]
-  (scale v (/ s)))
-
-(defn avg
-  "Returns a vector that is the average of the input vectors."
-  [vs]
-  (/ (reduce + vs)
-     (count vs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; vector implementations
@@ -79,3 +58,40 @@
   (s/with-gen ::vector
     #(gen/vector (s/gen ::nice-double)
                  2 2))) ;; because vectors are now Vectors
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; basic vector operations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod + [clojure.lang.PersistentVector clojure.lang.PersistentVector]
+  [v1 v2]
+  (add v1 v2))
+
+(defmethod - [clojure.lang.PersistentVector clojure.lang.PersistentVector]
+  [v1 v2]
+  (let [negate #(scale % -1)]
+    (add v1 (negate v2))))
+
+(defmethod / [clojure.lang.PersistentVector java.lang.Number]
+  [v s]
+  (scale v (/ s)))
+
+(defn avg
+  "Returns a vector that is the average of the input vectors."
+  [vs]
+  (/ (reduce + vs)
+     (count vs)))
+
+(s/fdef avg
+  :args (s/cat :vs (s/coll-of ::vector :min-count 1))
+  :ret ::vector
+  ::fn (s/and #(let [min (apply min (map first (-> % :args :vs)))
+                     max (apply max (map first (-> % :args :vs)))
+                     avg (first (:ret %))]
+                 (<= min avg max))
+              #(let [min (apply min (map second (-> % :args :vs)))
+                     max (apply max (map second (-> % :args :vs)))
+                     avg (second (:ret %))]
+                 (<= min avg max))))
+
+(stest/check `avg)
