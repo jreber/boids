@@ -1,6 +1,7 @@
 (ns jreber.boids.boid
   (:refer-clojure :exclude [+])
   (:require [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :refer [check]]
             [jreber.boids.math.vector :as v]
             [clojure.algo.generic.arithmetic :as generic :refer [+]]))
 
@@ -10,8 +11,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (s/def ::position ::v/vector)
 (s/def ::velocity ::v/vector)
-(s/def ::boid (s/keys ::position
-                      ::velocity))
+(s/def ::boid (s/keys :req [::position
+                            ::velocity]))
 (s/def ::boids (s/coll-of ::boid))
 
 (def boid-accelerate-fspec
@@ -22,8 +23,8 @@
    :fn (s/and #(= (-> % :ret ::velocity)
                   (+ (-> % :args :boid ::velocity)
                      (-> % :args :acceleration)))
-              #(= (-> % :ret ::velocity)
-                  (-> % :args :boid ::velocity)))))
+              #(= (-> % :ret ::position)
+                  (-> % :args :boid ::position)))))
 
 (def boid-move-fspec
   (s/fspec
@@ -40,18 +41,19 @@
 ;; basic boid operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn accelerate
-  [{:keys [::velocity] :as boid} acceleration]
+  [boid acceleration]
   (s/assert ::boid boid)
   (update boid ::velocity + acceleration))
 
 (s/def accelerate boid-accelerate-fspec)
-
+(check `accelerate)
 
 (defn move
   "Moves a boid forward in time one time step, corresponding to adding
   the velocity vector to the position vector."
-  [{:keys [::position] :as boid}]
+  [{:keys [::velocity] :as boid}]
   (s/assert ::boid boid)
   (update boid ::position + velocity))
 
 (s/def move boid-move-fspec)
+(check `move)
