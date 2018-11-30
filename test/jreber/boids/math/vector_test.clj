@@ -4,10 +4,12 @@
             [jreber.boids.math.vector :as v]
             [clojure.algo.generic.arithmetic :refer [+ - /]]
             [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
             [clojure.test.check
              [generators :as gen]
              [clojure-test :refer [defspec]]
-             [properties :as prop]]))
+             [properties :as prop]]
+            [plumula.mimolette.alpha :refer [defspec-test]]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -81,14 +83,5 @@
        [(/ x s)
         (/ y s)])))
 
-(defspec avg
-  (prop/for-all [vs (gen/not-empty
-                     (gen/vector
-                      (s/gen ::v/vector)))]
-    (let [xs (map first vs)
-          ys (map second vs)
-          sum (partial reduce +)]
-      (= (v/avg vs)
-         [(/ (sum xs) (count xs))
-          (/ (sum ys) (count ys))]))))
-
+(defspec-test test-ns-specs
+  (stest/enumerate-namespace 'jreber.boids.math.vector))

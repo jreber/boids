@@ -4,7 +4,6 @@
              [arithmetic :as generic :refer [+ - /]]
              [math-functions :as m]]
             [clojure.spec.alpha :as s]
-            [clojure.spec.test.alpha :as stest]
             [clojure.spec.gen.alpha :as gen]))
 
 
@@ -85,13 +84,11 @@
 (s/fdef avg
   :args (s/cat :vs (s/coll-of ::vector :min-count 1))
   :ret ::vector
-  ::fn (s/and #(let [min (apply min (map first (-> % :args :vs)))
-                     max (apply max (map first (-> % :args :vs)))
-                     avg (first (:ret %))]
-                 (<= min avg max))
-              #(let [min (apply min (map second (-> % :args :vs)))
-                     max (apply max (map second (-> % :args :vs)))
-                     avg (second (:ret %))]
-                 (<= min avg max))))
-
-(stest/check `avg)
+  :fn (let [find (fn [reducer pos invocation]
+                   (reduce reducer
+                           (map pos
+                                (-> invocation :args :vs))))]
+        (s/and #(<= (find min x %) (x (:ret %)))
+               #(<= (x (:ret %)) (find max x %))
+               #(<= (find min y %) (y (:ret %)))
+               #(<= (y (:ret %)) (find max y %)))))
